@@ -1,6 +1,6 @@
 {
     "type": "mongodb",
-    "host": "database",
+    "host": "localhost",
     "database": "myapp",
     "port": 27017,
     "useNewUrlParser": true,

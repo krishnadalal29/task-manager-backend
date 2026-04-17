@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "fs";
 import * as path from "path";
 import { initializeDatabase } from "./db";
-import app from "./app";
+import { createApp } from "./app";
 
 function loadEnvFile(): void {
   const envPath = path.join(__dirname, "..", ".env");
@@ -38,9 +38,11 @@ const PORT = process.env.PORT ? Number(process.env.PORT) : 5000;
 async function startServer(): Promise<void> {
     try {
         await initializeDatabase();
+        const app = await createApp();
         app.listen(PORT, () => {
             console.log(`Server listening on port ${PORT}`);
             console.log(`API available at http://localhost:${PORT}/api`);
+            console.log(`API Documentation available at http://localhost:${PORT}/api/docs`);
         });
     } catch (err) {
         console.error("Startup failed", err);
