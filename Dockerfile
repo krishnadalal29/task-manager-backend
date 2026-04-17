@@ -16,4 +16,4 @@ RUN npm run build
 EXPOSE 5000
 
 # Use production start command
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]
