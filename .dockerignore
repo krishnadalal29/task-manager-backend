@@ -4,4 +4,3 @@ dist
 .env
 .git
 .gitignore
-ormconfig.json
