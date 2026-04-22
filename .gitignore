@@ -4,4 +4,5 @@ dist
 .env
 .env.*
 *.env.*
+!.env.example
 ormconfig.json
