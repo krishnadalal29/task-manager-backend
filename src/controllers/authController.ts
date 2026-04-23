@@ -1,6 +1,7 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { Request, Response } from "express";
 import { AppDataSource } from "../db";
+import { env } from "../config/env";
 import { AuthSession } from "../entity/authSession";
 import { User } from "../entity/user";
 import { hashAuthToken } from "../middleware/authMiddleware";
@@ -36,37 +37,19 @@ const PASSWORD_SCRYPT_KEY_LENGTH = 64;
 
 const oauthStates = new Map<string, number>();
 
-function readEnvWithDefault(key: string, defaultValue: string): string {
-    const value = process.env[key];
-    if (!value || !value.trim()) {
-        return defaultValue;
-    }
-
-    return value.trim();
-}
-
 function getGoogleOAuthEndpoints(): OAuthEndpoints {
     return {
-        authEndpoint: readEnvWithDefault(
-            "GOOGLE_AUTH_ENDPOINT",
-            "https://accounts.google.com/o/oauth2/v2/auth"
-        ),
-        tokenEndpoint: readEnvWithDefault(
-            "GOOGLE_TOKEN_ENDPOINT",
-            "https://oauth2.googleapis.com/token"
-        ),
-        userInfoEndpoint: readEnvWithDefault(
-            "GOOGLE_USERINFO_ENDPOINT",
-            "https://www.googleapis.com/oauth2/v3/userinfo"
-        )
+        authEndpoint: env.google.authEndpoint,
+        tokenEndpoint: env.google.tokenEndpoint,
+        userInfoEndpoint: env.google.userInfoEndpoint
     };
 }
 
 function getOAuthConfig(): OAuthConfig | null {
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const redirectUri = process.env.GOOGLE_REDIRECT_URI;
-    const frontendRedirect = process.env.FRONTEND_REDIRECT_URL;
+    const clientId = env.google.clientId;
+    const clientSecret = env.google.clientSecret;
+    const redirectUri = env.google.redirectUri;
+    const frontendRedirect = env.frontend.redirectUrl;
 
     if (!clientId || !clientSecret || !redirectUri) {
         return null;

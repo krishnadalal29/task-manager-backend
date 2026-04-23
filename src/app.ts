@@ -1,6 +1,9 @@
 import express, { Express } from "express";
 import swaggerJsdoc from "swagger-jsdoc";
 import apiRouter from "./routers/baseRouter";
+import { env } from "./config/env";
+
+const localApiUrl = `http://localhost:${env.server.port}`;
 
 const swaggerOptions = {
     definition: {
@@ -15,7 +18,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: "http://localhost:5000",
+                url: localApiUrl,
                 description: "Development server"
             },
             {
@@ -71,7 +74,7 @@ export async function createApp(): Promise<Express> {
     const app = createAppBase();
 
     // Always try to load Scalar first, fallback to HTML docs if it fails
-    console.log(`📋 Environment: ${process.env.NODE_ENV || 'undefined'}`);
+    console.log(`📋 Environment: ${env.nodeEnv}`);
 
     try {
         console.log("🔄 Attempting to load Scalar API Reference...");
@@ -303,8 +306,8 @@ function setupFallbackDocs(app: Express): void {
 
                         <div class="links">
                             <a href="/swagger.json" class="btn success">📄 OpenAPI JSON Spec</a>
-                            <a href="https://editor.swagger.io/?url=http://localhost:5000/swagger.json" class="btn" target="_blank">🔗 Swagger Editor</a>
-                            <a href="https://petstore.swagger.io/?url=http://localhost:5000/swagger.json" class="btn secondary" target="_blank">🛍️ Swagger UI</a>
+                            <a href="https://editor.swagger.io/?url=${localApiUrl}/swagger.json" class="btn" target="_blank">🔗 Swagger Editor</a>
+                            <a href="https://petstore.swagger.io/?url=${localApiUrl}/swagger.json" class="btn secondary" target="_blank">🛍️ Swagger UI</a>
                         </div>
                     </div>
                 </div>
@@ -316,3 +319,4 @@ function setupFallbackDocs(app: Express): void {
 
 // Sync version for tests and backward compatibility
 const app = createAppBase();
+export default app;
