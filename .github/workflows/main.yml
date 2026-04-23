@@ -137,9 +137,8 @@ jobs:
               continue
             }
 
-            # Quote values so spaces/special characters remain intact in env-file format.
-            $escaped = $value.Replace('"', '\"')
-            $lines.Add("$key=""$escaped""")
+            # Docker --env-file treats quotes as literal characters.
+            $lines.Add("$key=$value")
           }
 
           Set-Content -Path $outputPath -Value $lines -Encoding utf8

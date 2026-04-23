@@ -25,7 +25,18 @@ function readOptionalEnv(key: string): string | undefined {
     }
 
     const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : undefined;
+    if (trimmed.length === 0) {
+        return undefined;
+    }
+
+    const hasMatchingDoubleQuotes = trimmed.startsWith("\"") && trimmed.endsWith("\"");
+    const hasMatchingSingleQuotes = trimmed.startsWith("'") && trimmed.endsWith("'");
+
+    if (trimmed.length >= 2 && (hasMatchingDoubleQuotes || hasMatchingSingleQuotes)) {
+        return trimmed.slice(1, -1).trim();
+    }
+
+    return trimmed;
 }
 
 function readNumberEnv(key: string, fallback: number): number {
