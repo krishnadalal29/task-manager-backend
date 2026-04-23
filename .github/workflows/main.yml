@@ -91,22 +91,58 @@ jobs:
         run: docker pull ${{ secrets.DOCKER_USERNAME }}/my-backend:latest
 
       - name: Create .env.development file
-        uses: jakubcieslik99/secrets-vars-to-env-file-action@v1
-        with:
-          secrets: ${{ toJSON(secrets) }}
-          vars: ${{ toJSON(vars) }}
-          generate-file: true
-          file-name: .env.development
-          file-path: $env:RUNNER_TEMP
-          encoding: utf8
-        # run: |
-          #   $envContent = @"
-          #   NODE_ENV=${{ vars.NODE_ENV }}
-          #   PORT=${{ vars.PORT }}
-          #   API_KEY=${{ secrets.API_KEY }}
-          #   DB_HOST=${{ secrets.DB_HOST }}
-          #   "@
-          #   $envContent | Out-File -FilePath "$env:RUNNER_TEMP\.env.development" -Encoding utf8
+        shell: pwsh
+        env:
+          NODE_ENV: ${{ vars.NODE_ENV }}
+          PORT: ${{ vars.PORT }}
+          MONGO_HOST: ${{ vars.MONGO_HOST }}
+          MONGO_PORT: ${{ vars.MONGO_PORT }}
+          MONGO_DB: ${{ vars.MONGO_DB }}
+          MONGO_AUTH_SOURCE: ${{ vars.MONGO_AUTH_SOURCE }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REDIRECT_URI: ${{ vars.GOOGLE_REDIRECT_URI }}
+          FRONTEND_REDIRECT_URL: ${{ vars.FRONTEND_REDIRECT_URL }}
+          GOOGLE_AUTH_ENDPOINT: ${{ vars.GOOGLE_AUTH_ENDPOINT }}
+          GOOGLE_TOKEN_ENDPOINT: ${{ vars.GOOGLE_TOKEN_ENDPOINT }}
+          GOOGLE_USERINFO_ENDPOINT: ${{ vars.GOOGLE_USERINFO_ENDPOINT }}
+        run: |
+          $outputPath = Join-Path $env:RUNNER_TEMP ".env.development"
+          $keys = @(
+            "NODE_ENV",
+            "PORT",
+            "MONGO_HOST",
+            "MONGO_PORT",
+            "MONGO_DB",
+            "MONGO_AUTH_SOURCE",
+            "MONGO_URI",
+            "MONGO_USERNAME",
+            "MONGO_PASSWORD",
+            "GOOGLE_CLIENT_ID",
+            "GOOGLE_CLIENT_SECRET",
+            "GOOGLE_REDIRECT_URI",
+            "FRONTEND_REDIRECT_URL",
+            "GOOGLE_AUTH_ENDPOINT",
+            "GOOGLE_TOKEN_ENDPOINT",
+            "GOOGLE_USERINFO_ENDPOINT"
+          )
+
+          $lines = New-Object System.Collections.Generic.List[string]
+          foreach ($key in $keys) {
+            $value = [Environment]::GetEnvironmentVariable($key)
+            if ([string]::IsNullOrWhiteSpace($value)) {
+              continue
+            }
+
+            # Quote values so spaces/special characters remain intact in env-file format.
+            $escaped = $value.Replace('"', '\"')
+            $lines.Add("$key=""$escaped""")
+          }
+
+          Set-Content -Path $outputPath -Value $lines -Encoding utf8
           
       - name: Replace running container
         shell: pwsh
