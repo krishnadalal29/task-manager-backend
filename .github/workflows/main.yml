@@ -147,9 +147,15 @@ jobs:
       - name: Replace running container
         shell: powershell
         run: |
-          docker rm -f task-backend 2>$null
+          $containerName = "task-backend"
+          $existing = docker ps -a --filter "name=^$containerName$" --format "{{.Names}}"
+
+          if ($existing -and ($existing -split "`r?`n" | Where-Object { $_ -eq $containerName })) {
+            docker rm -f $containerName | Out-Null
+          }
+
           docker run -d `
-            --name task-backend `
+            --name $containerName `
             --restart unless-stopped `
             -p 5000:5000 `
             --env-file "$env:RUNNER_TEMP\.env.development" `
