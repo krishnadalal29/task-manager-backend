@@ -78,7 +78,7 @@ export async function createApp(): Promise<Express> {
 
     try {
         console.log("🔄 Attempting to load Scalar API Reference...");
-        // Use eval to dynamically import in a way that works with ts-node-dev
+        // Use eval for dynamic import compatibility in CommonJS runtime.
         const scalarModule = await eval('import("@scalar/express-api-reference")');
         const { apiReference } = scalarModule;
         app.use("/api/docs", apiReference({ url: "/swagger.json" }));
