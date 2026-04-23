@@ -5,9 +5,15 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
@@ -28,6 +34,7 @@ jobs:
 
   test:
     needs: build
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
@@ -48,7 +55,7 @@ jobs:
 
   prepare:
     needs: test
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
@@ -62,7 +69,6 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -73,8 +79,11 @@ jobs:
   deploy:
     needs: prepare
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: [self-hosted]  # your local Windows machine
+    runs-on: [self-hosted, windows]  # trusted deployment only (never fork PRs)
     environment: Development
+    concurrency:
+      group: backend-deploy-main
+      cancel-in-progress: true
 
     steps:
       - name: Pull latest image
@@ -82,7 +91,6 @@ jobs:
         run: docker pull ${{ secrets.DOCKER_USERNAME }}/my-backend:latest
 
       - name: Create .env.development file
-        # shell: pwsh
         uses: jakubcieslik99/secrets-vars-to-env-file-action@v1
         with:
           secrets: ${{ toJSON(secrets) }}
@@ -91,7 +99,7 @@ jobs:
           file-name: .env.development
           file-path: $env:RUNNER_TEMP
           encoding: utf8
-          # run: |
+        # run: |
           #   $envContent = @"
           #   NODE_ENV=${{ vars.NODE_ENV }}
           #   PORT=${{ vars.PORT }}
@@ -99,7 +107,7 @@ jobs:
           #   DB_HOST=${{ secrets.DB_HOST }}
           #   "@
           #   $envContent | Out-File -FilePath "$env:RUNNER_TEMP\.env.development" -Encoding utf8
-
+          
       - name: Replace running container
         shell: pwsh
         run: |
