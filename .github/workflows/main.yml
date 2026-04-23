@@ -87,11 +87,11 @@ jobs:
 
     steps:
       - name: Pull latest image
-        shell: pwsh
+        shell: powershell
         run: docker pull ${{ secrets.DOCKER_USERNAME }}/my-backend:latest
 
       - name: Create .env.development file
-        shell: pwsh
+        shell: powershell
         env:
           NODE_ENV: ${{ vars.NODE_ENV }}
           PORT: ${{ vars.PORT }}
@@ -145,7 +145,7 @@ jobs:
           Set-Content -Path $outputPath -Value $lines -Encoding utf8
           
       - name: Replace running container
-        shell: pwsh
+        shell: powershell
         run: |
           docker rm -f task-backend 2>$null
           docker run -d `
@@ -157,5 +157,5 @@ jobs:
 
       - name: Cleanup .env.development file
         if: always()
-        shell: pwsh
+        shell: powershell
         run: Remove-Item -Force "$env:RUNNER_TEMP\.env.development" -ErrorAction SilentlyContinue
