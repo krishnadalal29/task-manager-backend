@@ -95,20 +95,20 @@ jobs:
         env:
           NODE_ENV: ${{ vars.NODE_ENV }}
           PORT: ${{ vars.PORT }}
-          MONGO_HOST: ${{ vars.MONGO_HOST }}
-          MONGO_PORT: ${{ vars.MONGO_PORT }}
-          MONGO_DB: ${{ vars.MONGO_DB }}
-          MONGO_AUTH_SOURCE: ${{ vars.MONGO_AUTH_SOURCE }}
+          MONGO_HOST: ${{ secrets.MONGO_HOST }}
+          MONGO_PORT: ${{ secrets.MONGO_PORT }}
+          MONGO_DB: ${{ secrets.MONGO_DB }}
+          MONGO_AUTH_SOURCE: ${{ secrets.MONGO_AUTH_SOURCE }}
           MONGO_URI: ${{ secrets.MONGO_URI }}
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          GOOGLE_REDIRECT_URI: ${{ vars.GOOGLE_REDIRECT_URI }}
-          FRONTEND_REDIRECT_URL: ${{ vars.FRONTEND_REDIRECT_URL }}
-          GOOGLE_AUTH_ENDPOINT: ${{ vars.GOOGLE_AUTH_ENDPOINT }}
-          GOOGLE_TOKEN_ENDPOINT: ${{ vars.GOOGLE_TOKEN_ENDPOINT }}
-          GOOGLE_USERINFO_ENDPOINT: ${{ vars.GOOGLE_USERINFO_ENDPOINT }}
+          GOOGLE_REDIRECT_URI: ${{ secrets.GOOGLE_REDIRECT_URI }}
+          FRONTEND_REDIRECT_URL: ${{ secrets.FRONTEND_REDIRECT_URL }}
+          GOOGLE_AUTH_ENDPOINT: ${{ secrets.GOOGLE_AUTH_ENDPOINT }}
+          GOOGLE_TOKEN_ENDPOINT: ${{ secrets.GOOGLE_TOKEN_ENDPOINT }}
+          GOOGLE_USERINFO_ENDPOINT: ${{ secrets.GOOGLE_USERINFO_ENDPOINT }}
         run: |
           $outputPath = Join-Path $env:RUNNER_TEMP ".env.development"
           $keys = @(
