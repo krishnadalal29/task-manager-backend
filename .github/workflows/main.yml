@@ -93,22 +93,22 @@ jobs:
       - name: Create .env.development file
         shell: powershell
         env:
-          NODE_ENV: ${{ vars.NODE_ENV }}
-          PORT: ${{ vars.PORT }}
-          MONGO_HOST: ${{ secrets.MONGO_HOST }}
-          MONGO_PORT: ${{ secrets.MONGO_PORT }}
-          MONGO_DB: ${{ secrets.MONGO_DB }}
-          MONGO_AUTH_SOURCE: ${{ secrets.MONGO_AUTH_SOURCE }}
+          NODE_ENV: ${{ secrets.NODE_ENV || vars.NODE_ENV }}
+          PORT: ${{ secrets.PORT || vars.PORT }}
+          MONGO_HOST: ${{ secrets.MONGO_HOST || vars.MONGO_HOST }}
+          MONGO_PORT: ${{ secrets.MONGO_PORT || vars.MONGO_PORT }}
+          MONGO_DB: ${{ secrets.MONGO_DB || vars.MONGO_DB }}
+          MONGO_AUTH_SOURCE: ${{ secrets.MONGO_AUTH_SOURCE || vars.MONGO_AUTH_SOURCE }}
           MONGO_URI: ${{ secrets.MONGO_URI }}
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          GOOGLE_REDIRECT_URI: ${{ secrets.GOOGLE_REDIRECT_URI }}
-          FRONTEND_REDIRECT_URL: ${{ secrets.FRONTEND_REDIRECT_URL }}
-          GOOGLE_AUTH_ENDPOINT: ${{ secrets.GOOGLE_AUTH_ENDPOINT }}
-          GOOGLE_TOKEN_ENDPOINT: ${{ secrets.GOOGLE_TOKEN_ENDPOINT }}
-          GOOGLE_USERINFO_ENDPOINT: ${{ secrets.GOOGLE_USERINFO_ENDPOINT }}
+          GOOGLE_REDIRECT_URI: ${{ secrets.GOOGLE_REDIRECT_URI || vars.GOOGLE_REDIRECT_URI }}
+          FRONTEND_REDIRECT_URL: ${{ secrets.FRONTEND_REDIRECT_URL || vars.FRONTEND_REDIRECT_URL }}
+          GOOGLE_AUTH_ENDPOINT: ${{ secrets.GOOGLE_AUTH_ENDPOINT || vars.GOOGLE_AUTH_ENDPOINT }}
+          GOOGLE_TOKEN_ENDPOINT: ${{ secrets.GOOGLE_TOKEN_ENDPOINT || vars.GOOGLE_TOKEN_ENDPOINT }}
+          GOOGLE_USERINFO_ENDPOINT: ${{ secrets.GOOGLE_USERINFO_ENDPOINT || vars.GOOGLE_USERINFO_ENDPOINT }}
         run: |
           $outputPath = Join-Path $env:RUNNER_TEMP ".env.development"
           $keys = @(
@@ -145,20 +145,38 @@ jobs:
           
       - name: Replace running container
         shell: powershell
+        env:
+          DOCKER_NETWORK: ${{ secrets.DOCKER_NETWORK || vars.DOCKER_NETWORK }}
         run: |
           $containerName = "task-backend"
           $existing = docker ps -a --filter "name=^$containerName$" --format "{{.Names}}"
+          $dockerNetwork = [Environment]::GetEnvironmentVariable("DOCKER_NETWORK")
+
+          if ([string]::IsNullOrWhiteSpace($dockerNetwork)) {
+            $dockerNetwork = "infra_app-network"
+          }
+
+          $networkExists = docker network ls --format "{{.Name}}" | Where-Object { $_ -eq $dockerNetwork }
+          if (-not $networkExists) {
+            throw "Docker network '$dockerNetwork' not found. Start your infra stack first (mongodb) or set DOCKER_NETWORK in GitHub vars/secrets."
+          }
 
           if ($existing -and ($existing -split "`r?`n" | Where-Object { $_ -eq $containerName })) {
             docker rm -f $containerName | Out-Null
           }
 
-          docker run -d `
-            --name $containerName `
-            --restart unless-stopped `
-            -p 5000:5000 `
-            --env-file "$env:RUNNER_TEMP\.env.development" `
-            ${{ secrets.DOCKER_USERNAME }}/my-backend:latest
+          $runArgs = @(
+            "run",
+            "-d",
+            "--name", $containerName,
+            "--restart", "unless-stopped",
+            "-p", "5000:5000",
+            "--network", $dockerNetwork,
+            "--env-file", "$env:RUNNER_TEMP\.env.development",
+            "${{ secrets.DOCKER_USERNAME }}/my-backend:latest"
+          )
+
+          docker @runArgs
 
       - name: Cleanup .env.development file
         if: always()
